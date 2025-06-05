@@ -16,6 +16,4 @@ public class IntegrationTest {
             assertNotNull(kafka.getBootstrapServers());
         }
     }
-
-    // You can extend this with Flink job tests using embedded Kafka producers/consumers
 }

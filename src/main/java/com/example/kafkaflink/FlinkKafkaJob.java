@@ -8,6 +8,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
 import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
@@ -26,15 +27,9 @@ public class FlinkKafkaJob {
 
         Properties props = KafkaUtils.getKafkaProperties();
         JsonValidator validator = new JsonValidator();
+        OutputTag<String> invalidTag = new OutputTag<>("invalid") {};
 
-        OutputTag<String> invalidTag = new OutputTag<String>("invalid") {};
-
-        FlinkKafkaConsumer<String> consumer = new FlinkKafkaConsumer<>(
-                "topic1",
-                new SimpleStringSchema(),
-                props
-        );
-
+        FlinkKafkaConsumer<String> consumer = new FlinkKafkaConsumer<>("topic1", new SimpleStringSchema(), props);
         DataStream<String> stream = env.addSource(consumer);
 
         SingleOutputStreamOperator<String> validStream = stream.process(new ProcessFunction<String, String>() {
@@ -48,21 +43,23 @@ public class FlinkKafkaJob {
             }
         });
 
-        validStream.addSink(new FlinkKafkaProducer<>(
-                "topic2",
-                new SimpleStringSchema(),
-                props
-        ));
+        // Kafka sink for valid messages
+        validStream.addSink(new FlinkKafkaProducer<>("topic2", new SimpleStringSchema(), props));
 
-        validStream.addSink(StreamingFileSink
-                .forRowFormat(new Path("output/valid"), new SimpleStringEncoder<String>("UTF-8"))
-                .build());
+        // File sink for valid messages
+        StreamingFileSink<String> fileSink = StreamingFileSink
+                .forRowFormat(new Path("output/valid"), new SimpleStringEncoder<String>())
+                .withOutputFileConfig(OutputFileConfig.builder()
+                        .withPartPrefix("valid-data")
+                        .withPartSuffix(".txt")
+                        .build())
+                .build();
 
-        validStream.getSideOutput(invalidTag).addSink(new FlinkKafkaProducer<>(
-                "topic1.DLQ",
-                new SimpleStringSchema(),
-                props
-        ));
+        validStream.addSink(fileSink);
+
+        // Kafka sink for invalid messages
+        DataStream<String> invalidStream = validStream.getSideOutput(invalidTag);
+        invalidStream.addSink(new FlinkKafkaProducer<>("topic1.DLQ", new SimpleStringSchema(), props));
 
         env.execute("Kafka Flink Validation Job");
     }

@@ -1,7 +1,7 @@
 # Kafka Flink Assignment
 
 ## Description
-Flink streaming job that reads from Kafka topic `topic1`, validates JSON messages, and routes them accordingly:
+- Flink streaming job that reads from Kafka topic `topic1`, validates JSON messages, and routes them accordingly:
 - Valid messages are written to `topic2` and local disk in CSV format
 - Invalid messages are routed to a dead-letter queue topic `topic1.DLQ`
 

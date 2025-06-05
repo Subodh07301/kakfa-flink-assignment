@@ -2,7 +2,9 @@ package com.example.kafkaflink;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class JsonValidator {
+import java.io.Serializable;
+
+public class JsonValidator implements Serializable {
 
     private final ObjectMapper mapper = new ObjectMapper();
 

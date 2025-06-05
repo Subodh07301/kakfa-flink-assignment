@@ -1,6 +1,7 @@
 package com.example.kafkaflink;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class JsonValidatorTest {
@@ -15,7 +16,7 @@ public class JsonValidatorTest {
     @Test
     public void testInvalidJson() {
         JsonValidator validator = new JsonValidator();
-        String invalidJson = "{\"id\":\"invalid\",\"name\":\"Bob\",\"amt\":\"NaN\""; // missing closing brace
+        String invalidJson = "{\"id\":\"invalid\",\"name\":\"Bob\",\"amt\":\"NaN\""; // Missing closing brace
         assertFalse(validator.isValid(invalidJson));
     }
 }
